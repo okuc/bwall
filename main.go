@@ -2,13 +2,21 @@
 package main
 
 import (
+	"fmt"
+	"github.com/golang/freetype"
 	"github.com/reujab/wallpaper"
+	"golang.org/x/image/font"
+	"image"
+	"image/color"
+	"image/draw"
+	"image/jpeg"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"regexp"
+	"time"
 )
 
 // getImageLink parses Bing and gets img url
@@ -65,20 +73,9 @@ func exists(path string) (bool, error) {
 // and returns file path
 // https://stackoverflow.com/questions/22417283/save-an-image-from-url-to-file
 func downloadImg(url string, imgFileName string) string {
-	dir := "./.data/"
-	dirExists, err := exists(dir)
+	dir := "./img_data/"
 
-	if err != nil {
-		log.Fatal("Error finding directory:\n", err)
-	}
-
-	if !dirExists {
-		err = os.Mkdir(dir, 0777)
-
-		if err != nil {
-			log.Fatal("Couldn't Create Directory\n", err)
-		}
-	}
+	noExistToCreate(dir)
 
 	imageFilePath := dir + imgFileName
 	fileExists, err := exists(imageFilePath)
@@ -122,13 +119,130 @@ func downloadImg(url string, imgFileName string) string {
 	return dir + imageFilePath[1:]
 }
 
+//不存在，则进行创建该文件件
+func noExistToCreate(dir string) {
+	dirExists, err := exists(dir)
+
+	if err != nil {
+		log.Fatal("Error finding directory:\n", err)
+	}
+
+	if !dirExists {
+		err = os.Mkdir(dir, 0777)
+
+		if err != nil {
+			log.Fatal("Couldn't Create Directory\n", err)
+		}
+	}
+}
+
+func addWaterMark(file string, text []string) string {
+
+	var dpi float64 = 72
+	fontfile := "msyh.ttf"
+	hinting := "none"
+	var size float64 = 200
+	spacing := 1.5
+	wonb := false
+
+	dir, err := GetCurrentPath()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//读取字体
+	fontBytes, err := ioutil.ReadFile(dir + fontfile)
+	if err != nil {
+		log.Println(err)
+		return ""
+	}
+	//解析字体
+	f, err := freetype.ParseFont(fontBytes)
+	if err != nil {
+		log.Println(err)
+		return ""
+	}
+
+	// 初始化图片背景
+	fg := image.Black
+
+	if wonb {
+		fg = image.White
+	}
+	//初始化一张图片,生成原图
+	imgB, _ := os.Open(file)
+	img, _ := jpeg.Decode(imgB)
+	defer imgB.Close()
+	b := img.Bounds()
+	rgba := image.NewNRGBA(b)
+	draw.Draw(rgba, rgba.Bounds(), img, image.ZP, draw.Src)
+
+	//在图片上面添加文字
+	c := freetype.NewContext()
+	c.SetDPI(dpi)
+	//设置字体
+	c.SetFont(f)
+	//设置大小
+	c.SetFontSize(size)
+	//设置边界
+	c.SetClip(rgba.Bounds())
+	//设置背景底图
+	c.SetDst(rgba)
+	//设置背景图
+	c.SetSrc(fg)
+	//设置字体颜色(红色)
+	c.SetSrc(image.NewUniform(color.RGBA{255, 0, 0, 255}))
+	//设置提示
+	switch hinting {
+	default:
+		c.SetHinting(font.HintingNone)
+	case "full":
+		c.SetHinting(font.HintingFull)
+	}
+
+	// 画文字
+	//设置水印偏移量
+	pt := freetype.Pt(img.Bounds().Dx()-2500-10, img.Bounds().Dy()-int(c.PointToFixed(size)>>6)*2*len(text))
+	//pt := freetype.Pt(10, 10+int(c.PointToFixed(size)>>6))
+	for _, s := range text {
+		_, err = c.DrawString(s, pt)
+		if err != nil {
+			log.Println(err)
+			return ""
+		}
+		pt.Y += c.PointToFixed(size * spacing)
+	}
+
+	noExistToCreate(dir + "img_data/.tmp")
+
+	imgw, _ := os.Create(dir + "img_data/.tmp/out.jpg")
+	jpeg.Encode(imgw, rgba, &jpeg.Options{100})
+	defer imgw.Close()
+	return dir + "img_data/.tmp/out.jpg"
+}
 func setImageAsWallpaper() {
-	url, filename := getImageURL()
-	file := downloadImg(url, filename)
-	wallpaper.SetFromFile(file)
+	url, _ := getImageURL()
+	now := time.Now()
+	file := downloadImg(url, now.Format("2006-01-02")+".jpg")
+	var text = []string{"易怒的人", "缺乏就事论事的能力"}
+	waterMakerFile := addWaterMark(file, text)
+	fmt.Println(waterMakerFile)
+	wallpaper.SetFromFile(waterMakerFile)
 	log.Println("Enjoy, bye.")
+
+	//获娶当前壁纸
+	//background, err := wallpaper.Get()
+	//
+	//if err != nil {
+	//	panic(err)
+	//}
+	//
+	//fmt.Println("Current wallpaper:", background)
+	//wallpaper.SetFromFile("/usr/share/backgrounds/gnome/adwaita-day.jpg")
+	//wallpaper.SetFromURL("https://i.imgur.com/pIwrYeM.jpg")
 }
 
 func main() {
+
 	setImageAsWallpaper()
 }
