@@ -2,6 +2,8 @@
 package main
 
 import (
+	"bufio"
+	"container/list"
 	"fmt"
 	"github.com/golang/freetype"
 	"github.com/reujab/wallpaper"
@@ -16,6 +18,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -136,6 +139,7 @@ func noExistToCreate(dir string) {
 	}
 }
 
+//增加水印
 func addWaterMark(file string, text []string) string {
 
 	var dpi float64 = 72
@@ -220,12 +224,12 @@ func addWaterMark(file string, text []string) string {
 	defer imgw.Close()
 	return dir + "img_data/.tmp/out.jpg"
 }
-func setImageAsWallpaper() {
+func setImageAsWallpaper(text *[]string) {
 	url, _ := getImageURL()
 	now := time.Now()
 	file := downloadImg(url, now.Format("2006-01-02")+".jpg")
-	var text = []string{"易怒的人", "缺乏就事论事的能力"}
-	waterMakerFile := addWaterMark(file, text)
+
+	waterMakerFile := addWaterMark(file, *text)
 	fmt.Println(waterMakerFile)
 	wallpaper.SetFromFile(waterMakerFile)
 	log.Println("Enjoy, bye.")
@@ -242,7 +246,94 @@ func setImageAsWallpaper() {
 	//wallpaper.SetFromURL("https://i.imgur.com/pIwrYeM.jpg")
 }
 
-func main() {
+func GetMotto(fileName string, mottoList *list.List) {
+	file, err := os.OpenFile(fileName, os.O_RDWR, 0666)
+	if err != nil {
+		fmt.Println("Open file error!", err)
+		return
+	}
+	defer file.Close()
 
-	setImageAsWallpaper()
+	stat, err := file.Stat()
+	if err != nil {
+		panic(err)
+	}
+
+	var size = stat.Size()
+	fmt.Println("file size=", size)
+
+	buf := bufio.NewReader(file)
+	var text = []string{}
+	for {
+		line, err := buf.ReadString('\n')
+		//if err == io.EOF {
+		//	break  //finished reading
+		//}
+
+		line = strings.TrimSpace(line)
+		//本组里面没有内容，直接遇到了空行，则直接跳过
+		if strings.TrimSpace(line) == "" && len(text) == 0 && err != io.EOF {
+			continue
+		}
+		//本组里面有内容，遇到了空行，则直接把数组存起来，新建数据，然后继续下一次循环
+		if (strings.TrimSpace(line) == "" || err == io.EOF) && len(text) != 0 {
+			mottoList.PushBack(text)
+			text = []string{} //走到了文件结尾
+			if err == io.EOF {
+				break
+			} else {
+				continue
+			}
+		}
+		//走到了文件结尾
+		if err == io.EOF {
+			break
+		}
+		//处理异常
+		if err != nil {
+			fmt.Errorf("read failed:%v", err)
+			return
+		}
+		text = append(text, line)
+		if err != nil {
+			if err == io.EOF {
+				fmt.Println("File read ok!")
+				break
+			} else {
+				fmt.Println("Read file error!", err)
+				return
+			}
+		}
+	}
+}
+
+func main() {
+	//读取配置文件
+	conf := Config()
+	//读取解析名人名言
+	mottoList := list.New()
+	GetMotto(conf.MottoFileName, mottoList)
+	var curentItem *list.Element
+	//默认设置为第一项
+	curentItem = mottoList.Front()
+	//配置中有值，则进行查找
+	if conf.CurrentText != "" {
+		//遍历查找，如果找到相同的，则设为相同的下一项
+		for item := mottoList.Front(); nil != item; item = item.Next() {
+			if strings.Join(item.Value.([]string), "$") == conf.CurrentText {
+				if item.Next() == nil { //最后一个，则设为第一个
+					curentItem = mottoList.Front()
+				} else {
+					curentItem = item.Next()
+				}
+				break
+			}
+		}
+	}
+	itemValue := curentItem.Value.([]string)
+	setImageAsWallpaper(&itemValue)
+
+	conf.CurrentText = strings.Join(itemValue, "$")
+	SaveConfig(conf)
+
 }
