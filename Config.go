@@ -13,6 +13,7 @@ type BwallConfig struct {
 	//当前展示的句子,注，首字母要大写，否则无法访问
 	CurrentText   string //记录当前句的第一句话
 	MottoFileName string //名言文本名称
+	Interval      int    //间隔时间
 }
 
 //读取配置文件
@@ -77,9 +78,9 @@ func (jst *JsonStruct) Save(filename string, v interface{}) {
 		panic(err)
 	}
 	//func (f *File) WriteAt(b []byte, off int64) (n int, err error)
-	length, err := f.WriteAt(b, 0)
+	_, err = f.WriteAt(b, 0)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(length) //8
+	//fmt.Println(length) //8
 }
