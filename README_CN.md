@@ -5,7 +5,9 @@
 每日自动下载bing当日高清壁纸，设置成个人的桌面，然后从文本中读取个人设置好的座右铭、名人名言、精彩词句等，根据设置的时间轮流添加到壁纸上。
 
 软件英文说明：https://github.com/okuc/bwall/blob/master/README.md
-软件下载地址：https://github.com/okuc/bwall/blob/master/release/bwall.7z
+
+软件下载地址：https://gitee.com/okuc/bwall/raw/master/release/bwall.7z
+
 # 配置介绍
 
 ```
