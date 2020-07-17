@@ -49,7 +49,7 @@ func (mw *MyWindow) AddNotifyIcon() {
 	mw.ni, err = walk.NewNotifyIcon(mw)
 	checkError(err)
 	mw.ni.SetVisible(true)
- 	//生成syso资源文件时，会把icon文件包含在内，生成id为0-3之间的一个，可以在这4个数间尝试一下。肯定有一个会是对的。
+	//生成syso资源文件时，会把icon文件包含在内，生成id为0-3之间的一个，可以在这4个数间尝试一下。肯定有一个会是对的。
 	icon, err := walk.NewIconFromResourceId(2)
 	checkError(err)
 	mw.SetIcon(icon)
@@ -62,7 +62,6 @@ func (mw *MyWindow) AddNotifyIcon() {
 		aboutAction.SetEnabled(true)
 		mw.msgbox("关于", "科技改变未来，谢谢！ \r\n              okuc 开发", walk.MsgBoxIconInformation)
 	})
-
 
 	helpMenu := mw.addMenu("帮助")
 	mw.addAction(helpMenu, "软件说明").Triggered().Attach(func() {
@@ -120,7 +119,7 @@ func main() {
 
 	mw.init()
 	mw.AddNotifyIcon()
-	mw.showInfo("提醒","壁纸切换器已运行。",walk.MsgBoxIconInformation)
+	mw.showInfo("提醒", "壁纸切换器已运行。", walk.MsgBoxIconInformation)
 
 	mw.Run()
 }

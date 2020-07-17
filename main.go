@@ -204,9 +204,11 @@ func addWaterMark(file string, text []string) string {
 		c.SetHinting(font.HintingFull)
 	}
 
+	//修正文字大小
+	c.SetDPI(dpi / 8500 * float64(img.Bounds().Dx()))
 	// 画文字
 	//设置水印偏移量
-	pt := freetype.Pt(img.Bounds().Dx()-2500-10, img.Bounds().Dy()-int(c.PointToFixed(size)>>6)*2*len(text))
+	pt := freetype.Pt(img.Bounds().Dx()*3/5-10, img.Bounds().Dy()-int(c.PointToFixed(size)>>6)*2*len(text))
 	//pt := freetype.Pt(10, 10+int(c.PointToFixed(size)>>6))
 	for _, s := range text {
 		_, err = c.DrawString(s, pt)
@@ -306,6 +308,7 @@ func GetMotto(fileName string, mottoList *list.List) {
 		}
 	}
 }
+
 //go build -ldflags "-H windowsgui"
 //func main() {
 //
