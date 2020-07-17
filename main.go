@@ -307,29 +307,33 @@ func GetMotto(fileName string, mottoList *list.List) {
 	}
 }
 //go build -ldflags "-H windowsgui"
-func main() {
-
-	//读取配置文件
-	var conf = Config()
-	//读取解析名人名言
-	var mottoList = list.New()
-	GetMotto(conf.MottoFileName, mottoList)
-	//setNextBwall(mottoList, conf, mychan)
-
-	// 指定的时间后执行一次
-	time.AfterFunc(time.Duration(conf.Interval)*time.Minute,
-		func() {
-			go func() { //协程函数
-				for {   //死循环，
-					setNextBwall(mottoList, conf)
-					//tick :=time.NewTicker(time.Duration(conf.Interval) * time.Minute)
-					time.Sleep(time.Duration(conf.Interval) * time.Minute)
-				}
-			}()
-		})
-
-	select {}
-}
+//func main() {
+//
+//	//读取配置文件
+//	var conf = Config()
+//	//读取解析名人名言
+//	var mottoList = list.New()
+//	GetMotto(conf.MottoFileName, mottoList)
+//	//setNextBwall(mottoList, conf, mychan)
+//
+//	// 指定的时间后执行一次
+//	time.AfterFunc(time.Duration(conf.Interval)*time.Minute,
+//		func() {
+//			go func() { //协程函数
+//				for {   //死循环，
+//					setNextBwall(mottoList, conf)
+//					//tick :=time.NewTicker(time.Duration(conf.Interval) * time.Minute)
+//					time.Sleep(time.Duration(conf.Interval) * time.Minute)
+//				}
+//			}()
+//		})
+//	mw := NewMyWindow()
+//
+//	mw.init()
+//	mw.AddNotifyIcon()
+//	mw.Run()
+//	select {}
+//}
 
 func setNextBwall(mottoList *list.List, conf *BwallConfig) {
 	var curentItem *list.Element
